@@ -12,6 +12,11 @@
   border-top: 1px dotted black;
 }
 
+.MyEditor-controls {
+  margin-top: 1em;
+}
+
+
 .MyEditor-styleButton {
   padding: 4px 1em;
   margin: 0 2px;

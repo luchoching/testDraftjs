@@ -30,6 +30,30 @@ class StyleButton extends Component {
   }
 }
 
+const INLINE_STYLES = [
+  {label: 'Bold', style: 'BOLD'},
+  {label: 'Italic', style: 'ITALIC'},
+  {label: 'Underline', style: 'UNDERLINE'},
+  {label: 'Monospace', style: 'CODE'},
+];
+
+const InlineStyleControls = ({editorState, onToggle}) => {
+  const currentStyle = editorState.getCurrentInlineStyle();
+  return (
+    <div className="MyEditor-controls">
+      {INLINE_STYLES.map(type =>
+        <StyleButton
+          key={type.label}
+          active={currentStyle.has(type.style)}
+          label={type.label}
+          onToggle={onToggle}
+          style={type.style}
+        />
+      )}
+    </div>
+  );
+};
+
 const BLOCK_TYPES = [
   {label: 'H1', style: 'header-one'},
   {label: 'H2', style: 'header-two'},
@@ -51,7 +75,7 @@ const BlockStyleControls = ({editorState, onToggle}) => {
     .getType();
 
   return (
-    <div>
+    <div className="MyEditor-controls">
       {BLOCK_TYPES.map((type) =>
         <StyleButton 
           key={type.label}
@@ -74,6 +98,7 @@ class MyEditor extends Component {
     this.onTab = this.onTab.bind(this);
     this.handleBold = this.handleBold.bind(this);
     this.toggleBlockType = (type) => this._toggleBlockType(type);
+    this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
   }
   
   _toggleBlockType(blockType) {
@@ -85,12 +110,20 @@ class MyEditor extends Component {
     );
   }
 
+  _toggleInlineStyle(inlineStyle) {
+    this.onChange(
+      RichUtils.toggleInlineStyle(
+        this.state.editorState,
+        inlineStyle
+      )
+    );
+  }
+
   handleBold() {
     this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
   }
 
   onTab(e) {
-    console.log('tab');
     e.preventDefault();
     const tabCharacter = '    ';
     let currentState = this.state.editorState;
@@ -114,6 +147,10 @@ class MyEditor extends Component {
         <BlockStyleControls 
           editorState={editorState}
           onToggle={this.toggleBlockType}
+        />
+        <InlineStyleControls
+          editorState={editorState}
+          onToggle={this.toggleInlineStyle}
         />
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
