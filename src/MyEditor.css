@@ -1,0 +1,31 @@
+.MyEditor-root {
+  border: 1px solid grey
+  ;
+  padding: 1em;
+  margin: 1em;
+}
+
+.MyEditor-editor {
+  cursor: text;
+  margin-top: 2em;
+  padding-top:1em;
+  border-top: 1px dotted black;
+}
+
+.MyEditor-styleButton {
+  padding: 4px 1em;
+  margin: 0 2px;
+  border: 1px solid black;
+  cursor: pointer;
+}
+
+.MyEditor-styleButton:hover {
+  background: grey;
+  border: 1px solid grey;
+  color: white;
+}
+
+.MyEditor-activeButton {
+  background: black;
+  color: white;
+}
