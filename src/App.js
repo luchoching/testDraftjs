@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import './App.css';
 import './MyEditor.css';
 
-import {Editor, EditorState, RichUtils, Modifier} from 'draft-js';
+import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator} from 'draft-js';
 import LinkEditor from './LinkEditor';
+
 
 class StyleButton extends Component {
   constructor() {
@@ -89,18 +90,111 @@ const BlockStyleControls = ({editorState, onToggle}) => {
   );
 }
 
+function findLinkEntities(contentBlock, callback, contentState) {
+  contentBlock.findEntityRanges(
+    (character) => {
+      const entityKey = character.getEntity();
+      return (
+        entityKey !== null &&
+        contentState.getEntity(entityKey).getType() === 'LINK'
+      );
+    },
+    callback
+  );
+}
+
+const Link = (props) => {
+  const {url} = props.contentState.getEntity(props.entityKey).getData();
+  return (
+    <a href={url} className='MyEditor-link' target='_blank'>
+      {props.children}
+    </a>
+  );
+};
+
 class MyEditor extends Component {
   constructor(props) {
     super(props);
-    this.state = {editorState: EditorState.createEmpty()};
+
+     const decorator = new CompositeDecorator([{
+       strategy: findLinkEntities,
+       component: Link,
+     }, ]);
+
+    this.state = {
+      editorState: EditorState.createEmpty(decorator),
+      showURLInput: false,
+      urlValue: ''
+    };
     this.onChange = (editorState) => this.setState({editorState});
     this.focus = () => this.refs.editor.focus();
     this.onTab = this.onTab.bind(this);
     this.handleBold = this.handleBold.bind(this);
     this.toggleBlockType = (type) => this._toggleBlockType(type);
     this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
+    this.promptForLink = this.promptForLink.bind(this);
+    this.onURLChange = (e) => this.setState({
+      urlValue: e.target.value
+    });
+    this.confirmLink = this.confirmLink.bind(this);
+    this.logState = () => {
+      const content = this.state.editorState.getCurrentContent();
+      console.log(convertToRaw(content));
+    };
   }
   
+  confirmLink(e) {
+    e.preventDefault();
+    const { editorState, urlValue } = this.state;
+    const contentState = editorState.getCurrentContent();
+    const contentStateWithEntity = contentState.createEntity(
+      'LINK',
+      'MUTABLE',
+      {url: urlValue}
+    )
+    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+    const newEditorState = EditorState.set(editorState, {
+      currentContent: contentStateWithEntity
+    });
+    this.setState({
+      editorState: RichUtils.toggleLink(
+        newEditorState, 
+        newEditorState.getSelection(), 
+        entityKey
+      ),
+      showURLInput: false,
+      urlValue: ''
+    }, () => {
+      setTimeout(()=> this.refs.editor.focus(), 0);
+    });
+  }
+
+  promptForLink(e) {
+    e.preventDefault();
+    const {editorState} = this.state;
+    const selection = editorState.getSelection();
+    if (!selection.isCollapsed()){
+      const contentState = editorState.getCurrentContent();
+      const startKey = selection.getStartKey();
+      const startOffset = selection.getStartOffset();
+      const blockWithLinkAtBeginning = contentState.getBlockForKey(startKey);
+      const linkKey = blockWithLinkAtBeginning.getEntityAt(startOffset);
+
+      let url='';
+      if (linkKey) {
+        const linkInstance = contentState.getEntity(linkKey);
+        url = linkInstance.getData().url;
+      }
+
+      this.setState({
+        showURLInput: true,
+        urlValue: url
+      }, () => {
+        setTimeout(() => this.refs.url.focus(), 0);
+      });
+    }
+  }
+
   _toggleBlockType(blockType) {
     this.onChange(
       RichUtils.toggleBlockType(
@@ -147,6 +241,44 @@ class MyEditor extends Component {
     }
   }
 
+  urlInput() {
+    if (!this.state.showURLInput) return null;
+
+    return (
+      <div className='MyEditor-input-controls'>
+        <input 
+          type='text'
+          ref='url'
+          value={this.state.urlValue}
+          onChange={this.onURLChange}
+        />
+        <button onMouseDown={this.confirmLink}>確認</button>
+      </div>
+    );
+  }
+
+  linkActions() {
+    return (
+      <div className='MyEditor-controls'>
+        <span 
+          className='MyEditor-styleButton'
+          onMouseDown={this.promptForLink}
+        >Add Link</span>
+        <span className='MyEditor-styleButton'>Remove Link</span>
+      </div>
+    );
+  }
+
+  showState() {
+    return (
+      <div className='MyEditor-controls'>
+        <span className='MyEditor-styleButton' onClick={this.logState}>
+          Show State
+        </span>
+      </div>
+    );
+  }
+
   render() {
     const editorState = this.state.editorState;
 
@@ -161,6 +293,9 @@ class MyEditor extends Component {
           editorState={editorState}
           onToggle={this.toggleInlineStyle}
         />
+        {this.linkActions()}
+        {this.urlInput()}
+        {this.showState()}
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
             blockStyleFn={this.getBlockStyle}
@@ -183,6 +318,7 @@ class App extends Component {
     return (
       <div className='App'>
         <MyEditor />
+        {/*<LinkEditor />*/}
       </div>
     );
   }

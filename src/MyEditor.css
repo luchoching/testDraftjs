@@ -16,7 +16,6 @@
   margin-top: 1em;
 }
 
-
 .MyEditor-styleButton {
   padding: 4px 1em;
   margin: 0 2px;
@@ -52,4 +51,19 @@
 
 .MyEditor-root pre pre {
   border: none;
+}
+
+.MyEditor-input-controls {
+  margin-top: 1em;
+}
+
+.MyEditor-input-controls input{
+  height: 100%;
+  font-size: 1em;
+}
+
+.MyEditor-link {
+  color: blue;
+  cursor: pointer;
+  padding: 0 4px;
 }
