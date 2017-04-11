@@ -138,6 +138,15 @@ class MyEditor extends Component {
     });
   }
 
+  getBlockStyle(block) {
+    switch (block.getType()) {
+    case 'blockquote':
+      return 'MyEditor-blockquote';
+    default:
+      return null;
+    }
+  }
+
   render() {
     const editorState = this.state.editorState;
 
@@ -154,6 +163,7 @@ class MyEditor extends Component {
         />
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
+            blockStyleFn={this.getBlockStyle}
             editorState={editorState} 
             onChange={this.onChange} 
             onTab={this.onTab}
@@ -167,7 +177,6 @@ class MyEditor extends Component {
     );
   }
 }
-
 
 class App extends Component {
   render() {
