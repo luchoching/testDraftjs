@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
+import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator} from 'draft-js';
 import './App.css';
 import './MyEditor.css';
-
-import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator} from 'draft-js';
-import LinkEditor from './LinkEditor';
-
 
 class StyleButton extends Component {
   constructor() {
@@ -124,7 +121,8 @@ class MyEditor extends Component {
     this.state = {
       editorState: EditorState.createEmpty(decorator),
       showURLInput: false,
-      urlValue: ''
+      urlValue: '',
+      showHTML: false
     };
     this.onChange = (editorState) => this.setState({editorState});
     this.focus = () => this.refs.editor.focus();
@@ -141,6 +139,9 @@ class MyEditor extends Component {
       const content = this.state.editorState.getCurrentContent();
       console.log(convertToRaw(content));
     };
+    this.showHtml = () => {
+      this.setState((prevState) => ({showHTML: !prevState.showHTML}));
+    }
   }
   
   confirmLink(e) {
@@ -269,12 +270,24 @@ class MyEditor extends Component {
     );
   }
 
-  showState() {
+  utils() {
     return (
       <div className='MyEditor-controls'>
         <span className='MyEditor-styleButton' onClick={this.logState}>
           Show State
         </span>
+        <span className='MyEditor-styleButton' onClick={this.showHtml}>
+          Show HTML
+        </span>
+      </div>
+    );
+  }
+
+  showReadOnlyEditor() {
+    if (!this.state.showHTML) return null;
+    return (
+      <div className='MyEditor-editor' >
+        <Editor editorState={this.state.editorState} readOnly />
       </div>
     );
   }
@@ -295,7 +308,7 @@ class MyEditor extends Component {
         />
         {this.linkActions()}
         {this.urlInput()}
-        {this.showState()}
+        {this.utils()}
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
             blockStyleFn={this.getBlockStyle}
@@ -306,7 +319,7 @@ class MyEditor extends Component {
             ref="editor"  
           />
         </div>
-
+        {this.showReadOnlyEditor()}
       </div>
         
     );
@@ -318,7 +331,6 @@ class App extends Component {
     return (
       <div className='App'>
         <MyEditor />
-        {/*<LinkEditor />*/}
       </div>
     );
   }
