@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator} from 'draft-js';
+import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator, AtomicBlockUtils} from 'draft-js';
 import InlineStyleControls from './InlineStyleControls';
 import BlockStyleControls from './BlockStyleControls';
 import ActionButton from './ActionButton';
@@ -27,20 +27,32 @@ const Link = (props) => {
   );
 };
 
+class Image extends Component {
+  render() {
+    const {block, contentState} = this.props;
+    const {src} = this.props.blockProps;
+    // const data = contentState.getEntity(block.getEntityAt(0)).getData();
+    // console.log('data: ', data);
+    return <img src={src} alt='' />
+  }
+}
+
 class MyEditor extends Component {
   constructor(props) {
     super(props);
 
-     const decorator = new CompositeDecorator([{
-       strategy: findLinkEntities,
-       component: Link,
-     }, ]);
+    const decorator = new CompositeDecorator([{
+      strategy: findLinkEntities,
+      component: Link
+    }]);
 
     this.state = {
       editorState: EditorState.createEmpty(decorator),
       showURLInput: false,
       urlValue: '',
-      showHTML: false
+      showHTML: false,
+      showImgInput: false,
+      imgValue: ''
     };
     this.onChange = (editorState) => this.setState({editorState});
     this.focus = () => this.refs.editor.focus();
@@ -63,6 +75,60 @@ class MyEditor extends Component {
     }
     this.removeLink = this.removeLink.bind(this);
     this.onLinkInputKeyDown = this.onLinkInputKeyDown.bind(this);
+    this.onImgChange = (e) => this.setState({
+      imgValue: e.target.value
+    });
+    this.onImgInputKeyDown = this.onImgInputKeyDown.bind(this);
+    this.confirmImg = this.confirmImg.bind(this);
+    this.myBlockRenderer = this.myBlockRenderer.bind(this);
+  }
+
+  myBlockRenderer(contentBlock) {
+    const type = contentBlock.getType();
+    if (type === 'atomic') {
+      const {editorState} = this.state;
+      const contentState = editorState.getCurrentContent();
+      const entity = contentState.getEntity(contentBlock.getEntityAt(0));
+      const entityType = entity.getType();
+      if (entityType === 'image') {
+        return {
+          component: Image,
+          editable: false,
+          props: {
+            src: this.state.imgValue
+          }
+        };
+      }
+    }
+    return null;
+  }
+
+  confirmImg() {
+    const {editorState, imgValue} = this.state;
+    const urlType = 'image';
+    const contentState = editorState.getCurrentContent();
+    const contentStateWithEntity = contentState.createEntity(urlType, 'IMMUTABLE', {
+      src: imgValue
+    });
+    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+    const newEditorState = AtomicBlockUtils.insertAtomicBlock(
+      editorState,
+      entityKey,
+      ' '
+    );
+
+    this.setState({
+      editorState: EditorState.forceSelection(
+        newEditorState,
+        contentState.getSelectionAfter()
+      )
+    })
+  }
+
+  onImgInputKeyDown(e) {
+    if (e.which === 13) {
+      this.confirmImg(e);
+    }
   }
 
   onLinkInputKeyDown(e) {
@@ -108,8 +174,10 @@ class MyEditor extends Component {
     });
   }
 
+  //just show img input form
   promptForImg(e) {
     e.preventDefault();
+    this.setState((prevState) => ({showImgInput: !prevState.showImgInput}));
   }
 
   promptForLink(e) {
@@ -178,6 +246,29 @@ class MyEditor extends Component {
     default:
       return null;
     }
+  }
+
+  imgInput() {
+    if (!this.state.showImgInput) return null;
+    return (
+      <div className='MyEditor-input-controls'>
+        <input 
+          className='MyEditor-url-input'
+          type='text'
+          ref='img'
+          value={this.state.imgValue}
+          onChange={this.onImgChange}
+          placeholder='輸入圖片網址'
+          onKeyDown={this.onImgInputKeyDown}
+        />
+        <span 
+          className='MyEditor-styleButton'
+          onMouseDown={this.confirmImg}
+        >
+          確認
+        </span>
+      </div>
+    );
   }
 
   urlInput() {
@@ -252,9 +343,11 @@ class MyEditor extends Component {
         />
         {this.actions()}
         {this.urlInput()}
+        {this.imgInput()}
         {this.utils()}
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
+            blockRendererFn={this.myBlockRenderer}
             blockStyleFn={this.getBlockStyle}
             editorState={editorState} 
             onChange={this.onChange} 
