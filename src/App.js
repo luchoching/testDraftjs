@@ -142,7 +142,20 @@ class MyEditor extends Component {
     this.showHtml = () => {
       this.setState((prevState) => ({showHTML: !prevState.showHTML}));
     }
+    this.removeLink = this.removeLink.bind(this);
   }
+
+  removeLink(e) {
+    e.preventDefault();
+    const {editorState} = this.state;
+    const selection = editorState.getSelection();
+    if (!selection.isCollapsed()) {
+      this.setState({
+        editorState: RichUtils.toggleLink(editorState, selection, null),
+      });
+    }
+  }
+
   
   confirmLink(e) {
     e.preventDefault();
@@ -265,7 +278,12 @@ class MyEditor extends Component {
           className='MyEditor-styleButton'
           onMouseDown={this.promptForLink}
         >Add Link</span>
-        <span className='MyEditor-styleButton'>Remove Link</span>
+        <span 
+          className='MyEditor-styleButton'
+          onMouseDown={this.removeLink}
+        >
+          Remove Link
+        </span>
       </div>
     );
   }
