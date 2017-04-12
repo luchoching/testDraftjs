@@ -67,3 +67,11 @@
   cursor: pointer;
   padding: 0 4px;
 }
+
+.MyEditor-url-input {
+  width: 30%;
+  padding: 4px 1em;
+  margin: 0 2px;
+  border: 1px solid black;
+  cursor: pointer;
+}

@@ -127,7 +127,6 @@ class MyEditor extends Component {
     this.onChange = (editorState) => this.setState({editorState});
     this.focus = () => this.refs.editor.focus();
     this.onTab = this.onTab.bind(this);
-    this.handleBold = this.handleBold.bind(this);
     this.toggleBlockType = (type) => this._toggleBlockType(type);
     this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
     this.promptForLink = this.promptForLink.bind(this);
@@ -143,6 +142,13 @@ class MyEditor extends Component {
       this.setState((prevState) => ({showHTML: !prevState.showHTML}));
     }
     this.removeLink = this.removeLink.bind(this);
+    this.onLinkInputKeyDown = this.onLinkInputKeyDown.bind(this);
+  }
+
+  onLinkInputKeyDown(e) {
+    if (e.which === 13) {
+      this.confirmLink(e);
+    }
   }
 
   removeLink(e) {
@@ -155,7 +161,6 @@ class MyEditor extends Component {
       });
     }
   }
-
   
   confirmLink(e) {
     e.preventDefault();
@@ -227,10 +232,6 @@ class MyEditor extends Component {
     );
   }
 
-  handleBold() {
-    this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
-  }
-
   onTab(e) {
     e.preventDefault();
     const tabCharacter = '    ';
@@ -261,12 +262,20 @@ class MyEditor extends Component {
     return (
       <div className='MyEditor-input-controls'>
         <input 
+          className='MyEditor-url-input'
           type='text'
           ref='url'
           value={this.state.urlValue}
           onChange={this.onURLChange}
+          placeholder='輸入連結網址'
+          onKeyDown={this.onLinkInputKeyDown}
         />
-        <button onMouseDown={this.confirmLink}>確認</button>
+        <span 
+          className='MyEditor-styleButton'
+          onMouseDown={this.confirmLink}
+        >
+          確認
+        </span>
       </div>
     );
   }
@@ -315,7 +324,6 @@ class MyEditor extends Component {
 
     return (
       <div className='MyEditor-root'>
-        {/*<button onClick={this.handleBold}>Bold</button>*/}
         <BlockStyleControls 
           editorState={editorState}
           onToggle={this.toggleBlockType}
