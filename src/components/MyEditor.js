@@ -1,91 +1,9 @@
 import React, { Component } from 'react';
 import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator} from 'draft-js';
-import './App.css';
+import InlineStyleControls from './InlineStyleControls';
+import BlockStyleControls from './BlockStyleControls';
+import ActionButton from './ActionButton';
 import './MyEditor.css';
-
-class StyleButton extends Component {
-  constructor() {
-    super();
-    this.onToggle = (e) => {
-      e.preventDefault();
-      this.props.onToggle(this.props.style);
-    };
-  }
-  render() {
-    let className = 'MyEditor-styleButton';
-    if (this.props.active) {
-      className += ' MyEditor-activeButton';
-    }
-
-    return ( 
-      <span 
-        className={className}
-        onMouseDown={this.onToggle}
-      > 
-        {this.props.label} 
-      </span>
-     );
-  }
-}
-
-const INLINE_STYLES = [
-  {label: 'Bold', style: 'BOLD'},
-  {label: 'Italic', style: 'ITALIC'},
-  {label: 'Underline', style: 'UNDERLINE'},
-  {label: 'Monospace', style: 'CODE'},
-];
-
-const InlineStyleControls = ({editorState, onToggle}) => {
-  const currentStyle = editorState.getCurrentInlineStyle();
-  return (
-    <div className="MyEditor-controls">
-      {INLINE_STYLES.map(type =>
-        <StyleButton
-          key={type.label}
-          active={currentStyle.has(type.style)}
-          label={type.label}
-          onToggle={onToggle}
-          style={type.style}
-        />
-      )}
-    </div>
-  );
-};
-
-const BLOCK_TYPES = [
-  {label: 'H1', style: 'header-one'},
-  {label: 'H2', style: 'header-two'},
-  {label: 'H3', style: 'header-three'},
-  {label: 'H4', style: 'header-four'},
-  {label: 'H5', style: 'header-five'},
-  {label: 'H6', style: 'header-six'},
-  {label: 'Blockquote', style: 'blockquote'},
-  {label: 'UL', style: 'unordered-list-item'},
-  {label: 'OL', style: 'ordered-list-item'},
-  {label: 'Code Block', style: 'code-block'},
-];
-
-const BlockStyleControls = ({editorState, onToggle}) => {
-  const selection = editorState.getSelection();
-  const blockType = editorState
-    .getCurrentContent()
-    .getBlockForKey(selection.getStartKey())
-    .getType();
-
-  return (
-    <div className="MyEditor-controls">
-      {BLOCK_TYPES.map((type) =>
-        <StyleButton 
-          key={type.label}
-          active={type.style === blockType}
-          label={type.label}
-          onToggle={onToggle}
-          style={type.style}
-        />
-      )}
-    </div>
-  );
-}
 
 function findLinkEntities(contentBlock, callback, contentState) {
   contentBlock.findEntityRanges(
@@ -130,6 +48,8 @@ class MyEditor extends Component {
     this.toggleBlockType = (type) => this._toggleBlockType(type);
     this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
     this.promptForLink = this.promptForLink.bind(this);
+    this.promptForImg = this.promptForImg.bind(this);
+    
     this.onURLChange = (e) => this.setState({
       urlValue: e.target.value
     });
@@ -186,6 +106,10 @@ class MyEditor extends Component {
     }, () => {
       setTimeout(()=> this.refs.editor.focus(), 0);
     });
+  }
+
+  promptForImg(e) {
+    e.preventDefault();
   }
 
   promptForLink(e) {
@@ -280,19 +204,13 @@ class MyEditor extends Component {
     );
   }
 
-  linkActions() {
+  actions() {
     return (
       <div className='MyEditor-controls'>
-        <span 
-          className='MyEditor-styleButton'
-          onMouseDown={this.promptForLink}
-        >Add Link</span>
-        <span 
-          className='MyEditor-styleButton'
-          onMouseDown={this.removeLink}
-        >
-          Remove Link
-        </span>
+        <ActionButton label='Add Link' onMouseDown={this.promptForLink} />
+        <ActionButton label='Remove Link' onMouseDown={this.removeLink} />
+        <ActionButton label='Add Image' onMouseDown={this.promptForImg} />
+        <ActionButton label='Remove Image' onMouseDown={this.removeLink} />
       </div>
     );
   }
@@ -332,7 +250,7 @@ class MyEditor extends Component {
           editorState={editorState}
           onToggle={this.toggleInlineStyle}
         />
-        {this.linkActions()}
+        {this.actions()}
         {this.urlInput()}
         {this.utils()}
         <div className='MyEditor-editor'  onClick={this.focus}>
@@ -351,15 +269,4 @@ class MyEditor extends Component {
     );
   }
 }
-
-class App extends Component {
-  render() {
-    return (
-      <div className='App'>
-        <MyEditor />
-      </div>
-    );
-  }
-}
-
-export default App;
+export default MyEditor;
