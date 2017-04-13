@@ -81,6 +81,16 @@ class MyEditor extends Component {
     this.onImgInputKeyDown = this.onImgInputKeyDown.bind(this);
     this.confirmImg = this.confirmImg.bind(this);
     this.myBlockRenderer = this.myBlockRenderer.bind(this);
+    this.handleKeyCommand = this.handleKeyCommand.bind(this);
+  }
+
+  handleKeyCommand(command) {
+    const newState = RichUtils.handleKeyCommand(this.state.editorState, command);
+    if (newState) {
+      this.onChange(newState);
+      return 'handled';
+    }
+    return 'not-handled';
   }
 
   myBlockRenderer(contentBlock) {
@@ -347,6 +357,7 @@ class MyEditor extends Component {
         {this.utils()}
         <div className='MyEditor-editor'  onClick={this.focus}>
           <Editor
+            handleKeyCommand={this.handleKeyCommand}
             blockRendererFn={this.myBlockRenderer}
             blockStyleFn={this.getBlockStyle}
             editorState={editorState} 
