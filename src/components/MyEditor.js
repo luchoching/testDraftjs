@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {Editor, EditorState, RichUtils, Modifier, convertToRaw, CompositeDecorator, AtomicBlockUtils} from 'draft-js';
+import {stateToHTML} from 'draft-js-export-html';
 import InlineStyleControls from './InlineStyleControls';
 import BlockStyleControls from './BlockStyleControls';
 import ActionButton from './ActionButton';
@@ -27,15 +28,16 @@ const Link = (props) => {
   );
 };
 
-class Image extends Component {
-  render() {
-    const {block, contentState} = this.props;
-    const {src} = this.props.blockProps;
-    // const data = contentState.getEntity(block.getEntityAt(0)).getData();
-    // console.log('data: ', data);
-    return <img src={src} alt='' />
-  }
-}
+const Media = (props) => {
+  const entity = props.contentState.getEntity(
+    props.block.getEntityAt(0)
+  );
+  const {src} = entity.getData();
+  const type = entity.getType();
+  
+  //TODO: retrun other media types
+  return <img src={src} alt='' />;
+};
 
 class MyEditor extends Component {
   constructor(props) {
@@ -82,6 +84,13 @@ class MyEditor extends Component {
     this.confirmImg = this.confirmImg.bind(this);
     this.myBlockRenderer = this.myBlockRenderer.bind(this);
     this.handleKeyCommand = this.handleKeyCommand.bind(this);
+    this.showHtmlSource = this.showHtmlSource.bind(this);
+  }
+
+  showHtmlSource() {
+    const currentContentState = this.state.editorState.getCurrentContent();
+    const html = stateToHTML(currentContentState);
+    console.log(html);
   }
 
   handleKeyCommand(command) {
@@ -93,46 +102,42 @@ class MyEditor extends Component {
     return 'not-handled';
   }
 
-  myBlockRenderer(contentBlock) {
-    const type = contentBlock.getType();
+  myBlockRenderer(block) {
+    const type = block.getType();
     if (type === 'atomic') {
-      const {editorState} = this.state;
-      const contentState = editorState.getCurrentContent();
-      const entity = contentState.getEntity(contentBlock.getEntityAt(0));
-      const entityType = entity.getType();
-      if (entityType === 'image') {
         return {
-          component: Image,
-          editable: false,
-          props: {
-            src: this.state.imgValue
-          }
+          component: Media,
+          editable: false
         };
-      }
     }
     return null;
   }
 
-  confirmImg() {
+  confirmImg(e) {
+    e.preventDefault();
     const {editorState, imgValue} = this.state;
     const urlType = 'image';
     const contentState = editorState.getCurrentContent();
-    const contentStateWithEntity = contentState.createEntity(urlType, 'IMMUTABLE', {
-      src: imgValue
-    });
+    const contentStateWithEntity = contentState.createEntity(
+      urlType, 
+      'IMMUTABLE', 
+      { src: imgValue }
+    );
     const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
-    const newEditorState = AtomicBlockUtils.insertAtomicBlock(
-      editorState,
-      entityKey,
-      ' '
+    const newEditorState = EditorState.set(
+      editorState, 
+      { currentContent: contentStateWithEntity }
     );
 
     this.setState({
-      editorState: EditorState.forceSelection(
+      editorState: AtomicBlockUtils.insertAtomicBlock(
         newEditorState,
-        contentState.getSelectionAfter()
-      )
-    })
+        entityKey,
+        ' '
+      ),
+      showImgInput: false,
+      imgValue: ''
+    });
   }
 
   onImgInputKeyDown(e) {
@@ -311,7 +316,6 @@ class MyEditor extends Component {
         <ActionButton label='Add Link' onMouseDown={this.promptForLink} />
         <ActionButton label='Remove Link' onMouseDown={this.removeLink} />
         <ActionButton label='Add Image' onMouseDown={this.promptForImg} />
-        <ActionButton label='Remove Image' onMouseDown={this.removeLink} />
       </div>
     );
   }
@@ -323,6 +327,9 @@ class MyEditor extends Component {
           Show State
         </span>
         <span className='MyEditor-styleButton' onClick={this.showHtml}>
+          Show Read-only EditorState
+        </span>
+        <span className='MyEditor-styleButton' onClick={this.showHtmlSource}>
           Show HTML
         </span>
       </div>
@@ -331,6 +338,8 @@ class MyEditor extends Component {
 
   showReadOnlyEditor() {
     if (!this.state.showHTML) return null;
+    // this.logState();
+
     return (
       <div className='MyEditor-editor' >
         <Editor editorState={this.state.editorState} readOnly />

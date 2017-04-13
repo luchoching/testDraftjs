@@ -1626,6 +1626,12 @@ draft-js-buttons@^2.0.0-beta10:
     react ">=15.3.1"
     union-class-names "^1.0.0"
 
+draft-js-export-html@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/draft-js-export-html/-/draft-js-export-html-0.5.2.tgz#089e55ce06d5aed0dbd9af5eee2eb56c58a1c428"
+  dependencies:
+    draft-js-utils "^0.1.5"
+
 draft-js-inline-toolbar-plugin@beta:
   version "2.0.0-beta10"
   resolved "https://registry.yarnpkg.com/draft-js-inline-toolbar-plugin/-/draft-js-inline-toolbar-plugin-2.0.0-beta10.tgz#2dc65146fa9acef157bf40b222ddfc49e7b84948"
@@ -1646,6 +1652,10 @@ draft-js-plugins-editor@beta:
     find-with-regex "^1.0.2"
     immutable "~3.7.4"
     union-class-names "^1.0.0"
+
+draft-js-utils@^0.1.5:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/draft-js-utils/-/draft-js-utils-0.1.7.tgz#e2b6927ca620edf1855a4bfc1cf1d21080a70f16"
 
 draft-js@>=0.9.1, draft-js@^0.10.0:
   version "0.10.0"

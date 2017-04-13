@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "draft-js": "^0.10.0",
+    "draft-js-export-html": "^0.5.2",
     "draft-js-inline-toolbar-plugin": "beta",
     "draft-js-plugins-editor": "beta",
     "react": "^15.4.2",
